@@ -14,25 +14,35 @@
         <!-- 左边 -->
         <el-aside :width="fazjh">
         <div class="toggle-button" @click="toggleCollapse">|||</div>
-          <el-menu background-color="#333744" text-color="#fff" active-text-color="#409eff" :collapse="isCollapse" :collapse-transition="false" unique-opened>
+          <el-menu background-color="#333744" text-color="#fff"
+          active-text-color="#409eff" :collapse="isCollapse"
+          :collapse-transition="false" unique-opened router
+          :default-active="activePath">
             <!-- 一级菜单 -->
-            <el-submenu :index="item.id + ''" v-for="item in menulist" :key="item.id">
+            <el-submenu :index="item.id + ''" v-for="item in menulist"
+            :key="item.id">
               <template slot="title">
                   <!-- 图标 -->
                 <i :class="iconsObj[item.id]"></i>
                 <span slot="title">{{item.authName}}</span>
               </template>
-              <el-menu-item-group>
-                <el-menu-item :index="item.id + ''" v-for="item in item.children" :key="item.id">
+              <!-- 二级菜单 -->
+              <!-- <el-menu-item-group> -->
+                <el-menu-item :index="'/' + item.path"
+                v-for="item in item.children" :key="item.id"
+                @click="saveNave('/' + item.path)">
                 <i class="el-icon-menu"></i>
                 <span>{{item.authName}}</span>
                 </el-menu-item>
-              </el-menu-item-group>
+              <!-- </el-menu-item-group> -->
             </el-submenu>
           </el-menu>
         </el-aside>
         <!-- 右边 -->
-        <el-main>Main</el-main>
+        <el-main>
+          <!-- 路由占位符 -->
+          <router-view></router-view>
+        </el-main>
       </el-container>
     </el-container>
   </div>
@@ -53,7 +63,8 @@ export default {
         '145': 'iconfont icon-baobiao'
       },
       // 折叠
-      isCollapse: false
+      isCollapse: false,
+      activePath: ''
     }
   },
   computed: {
@@ -67,9 +78,14 @@ export default {
   },
   created () {
     this.getMenus()
+    this.activePath = window.sessionStorage.getItem('activePath')
   },
   mounted () {},
-  watch: {},
+  watch: {
+    fazjh () {
+      console.log('zjh发生了改变')
+    }
+  },
   methods: {
     //   退出
     logout () {
@@ -86,6 +102,11 @@ export default {
     // 折叠按钮
     toggleCollapse () {
       this.isCollapse = !this.isCollapse
+    },
+    // 二级菜单状态保存
+    saveNave (active) {
+      window.sessionStorage.setItem('activePath', active)
+      this.activePath = active
     }
   },
   components: {}
