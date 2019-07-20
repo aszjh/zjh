@@ -2,8 +2,8 @@
   <div>
     <el-breadcrumb separator-class="el-icon-arrow-right">
       <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
-      <el-breadcrumb-item>用户列表</el-breadcrumb-item>
       <el-breadcrumb-item>用户管理</el-breadcrumb-item>
+      <el-breadcrumb-item>用户列表</el-breadcrumb-item>
     </el-breadcrumb>
     <el-card class="box-card">
       <!-- 搜索与添加区域 -->
@@ -25,17 +25,23 @@
         <el-table-column prop="mobile" label="电话"></el-table-column>
         <el-table-column prop="role_name" label="角色"></el-table-column>
         <el-table-column label="状态">
+          <!-- 作用域插槽 -->
           <template slot-scope="scope">
             <!-- {{scope.row}} -->
             <el-switch v-model="scope.row.mg_state" @change="userStat(scope.row)"></el-switch>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="180px">
-          <template slot-scope>
-            <!-- 删除 -->
-            <el-button type="primary" icon="el-icon-edit" size="mini"></el-button>
+          <template slot-scope="scope">
             <!-- 修改 -->
-            <el-button type="danger" icon="el-icon-delete" size="mini"></el-button>
+            <el-button
+              type="primary"
+              icon="el-icon-edit"
+              size="mini"
+              @click="showusermod(scope.row.id)"
+            ></el-button>
+            <!-- 删除 -->
+            <el-button type="danger" icon="el-icon-delete" size="mini" @click="deleUserfa(scope.row.id)"></el-button>
             <!-- 分配角色-->
             <el-tooltip effect="dark" content="分配角色" placement="top" :enterable="false">
               <el-button type="warning" icon="el-icon-setting" size="mini"></el-button>
@@ -54,10 +60,10 @@
         :total="total"
       ></el-pagination>
     </el-card>
-    <!-- 添加用户框 -->
+    <!-- 添加用户 -->
     <el-dialog title="添加新用户" :visible.sync="dialogVisible" width="50%" @close="addDialogClosed">
       <!-- 表单 -->
-      <el-form :model="addForm" label-width="70px" :rules="addFormRules"  ref="addFormRef">
+      <el-form :model="addForm" label-width="70px" :rules="addFormRules" ref="addFormRef">
         <el-form-item label="用户名" prop="username">
           <el-input v-model="addForm.username"></el-input>
         </el-form-item>
@@ -74,6 +80,24 @@
       <span slot="footer" class="dialog-footer">
         <el-button @click="dialogVisible = false">取 消</el-button>
         <el-button type="primary" @click="addUser">确 定</el-button>
+      </span>
+    </el-dialog>
+    <!-- 修改用户 -->
+    <el-dialog title="修改用户" :visible.sync="usermod" width="50%" @close="ieduserRefas">
+      <el-form ref="ieduserRef" :model="ieduserdata" label-width="70px" :rules="ieduserRules">
+        <el-form-item label="用户名">
+          <el-input v-model="ieduserdata.username" disabled></el-input>
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="ieduserdata.email"></el-input>
+        </el-form-item>
+        <el-form-item label="手机" prop="mobile">
+          <el-input v-model="ieduserdata.mobile"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="usermod = false">取 消</el-button>
+        <el-button type="primary" @click="ieddefine">确 定</el-button>
       </span>
     </el-dialog>
   </div>
@@ -116,10 +140,15 @@ export default {
         // 当前每页显示多少条数据
         pagesize: 2
       },
+      // 用户数据集合
       userlist: [],
+      // 记录总数
       total: 0,
-      // 添加用户输入框
+      // 添加用户
       dialogVisible: false,
+      // 修改用户
+      usermod: false,
+      ieduserdata: {},
       // 添加用户的表单数据
       addForm: {
         username: '',
@@ -147,6 +176,17 @@ export default {
             trigger: 'blur'
           }
         ],
+        email: [
+          { required: true, message: '请输入邮箱', trigger: 'blur' },
+          { validator: checkEmail, trigger: 'blur' }
+        ],
+        mobile: [
+          { required: true, message: '请输入手机号', trigger: 'blur' },
+          { validator: checkMobile, trigger: 'blur' }
+        ]
+      },
+      // 修改表单校验规则
+      ieduserRules: {
         email: [
           { required: true, message: '请输入邮箱', trigger: 'blur' },
           { validator: checkEmail, trigger: 'blur' }
@@ -220,6 +260,65 @@ export default {
         // 重新获取用户列表数据
         this.getUsers()
       })
+    },
+    // 获取要修改的用户数据
+    async showusermod (id) {
+      const { data: res } = await this.$http.get('users/' + id)
+      if (res.meta.status !== 200) {
+        return this.$message.error('编辑用户失败!')
+      }
+      this.$message.success('编辑用户成功！')
+      this.ieduserdata = res.data
+      // console.log(this.ieduserdata)
+      this.usermod = true
+    },
+    // 重置
+    ieduserRefas () {
+      this.$refs.ieduserRef.resetFields()
+    },
+    // 确定修改
+    ieddefine () {
+      // 提交前的预验证
+      this.$refs.ieduserRef.validate(async valid => {
+        if (!valid) return
+        // 发起请求
+        const { data: res } = await this.$http.put(
+          'users/' + this.ieduserdata.id,
+          {
+            email: this.ieduserdata.email,
+            mobile: this.ieduserdata.mobile
+          }
+        )
+        if (res.meta.status !== 200) {
+          return this.$message.error('修改用户失败!')
+        }
+        this.$message.success('修改用户成功！')
+      })
+      // 隐藏对话框
+      this.usermod = false
+      // 重新获取用户列表数据
+      this.getUsers()
+    },
+    // 确定删除
+    async deleUserfa (id) {
+      // 点击删除弹框
+      const deleResult = await this.$confirm('此操作将永久删除该用户, 是否继续?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).catch(err => err)
+      // 如果用户确认删除返回字符串confirm取消删除返回cancel
+      console.log(deleResult)
+      if (deleResult === 'cancel') {
+        return this.$message.info('已取消')
+      }
+      // 发送删除请求
+      const { data: res } = await this.$http.delete('users/' + id)
+      if (res.meta.status !== 200) {
+        return this.$message.error('删除失败')
+      }
+      this.$message.success('删除成功')
+      this.getUsers()
     }
   },
   components: {}

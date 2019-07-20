@@ -7,6 +7,7 @@ import users from '../views/home/users'
 import goods from '../views/home/goods'
 import orders from '../views/home/orders'
 import rights from '../views/home/rights'
+import roles from '../views/home/rights/Roles'
 import reports from '../views/home/reports'
 
 Vue.use(Router)
@@ -43,6 +44,9 @@ const router = new Router({
         }, {
           path: '/rights',
           component: rights
+        }, {
+          path: '/roles',
+          component: roles
         }, {
           path: '/reports',
           component: reports
