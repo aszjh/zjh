@@ -5,6 +5,7 @@ import home from '../views/home'
 import welcome from '../views/home/welcome'
 import users from '../views/home/users'
 import goods from '../views/home/goods'
+import categories from '../views/home/goods/categories'
 import orders from '../views/home/orders'
 import rights from '../views/home/rights'
 import roles from '../views/home/rights/Roles'
@@ -38,6 +39,9 @@ const router = new Router({
         }, {
           path: '/goods',
           component: goods
+        }, {
+          path: '/categories',
+          component: categories
         }, {
           path: '/orders',
           component: orders
