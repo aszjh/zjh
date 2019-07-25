@@ -1,15 +1,11 @@
 <template>
-  <div id="app">
+  <div class="app">
+    <!-- 7. 渲染路由 -->
     <router-view></router-view>
   </div>
 </template>
-
 <script>
-
-export default {
-  name: 'app'
-}
+export default {}
 </script>
-
-<style>
+<style  lang="less" scoped>
 </style>

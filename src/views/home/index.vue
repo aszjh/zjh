@@ -1,118 +1,105 @@
 <template>
-  <div class="home">
+  <el-container class="home">
+    <el-header>
+      <div @click="toHome">
+        <img src="./heima.png" alt />
+        <span>电商后台管理系统</span>
+      </div>
+      <el-button type="info" @click="logout">退出</el-button>
+    </el-header>
     <el-container>
-      <!-- 头部 -->
-      <el-header>
-        <div>
-          <img src="./heima.png" alt />
-          <span>电商后台管理系统</span>
-        </div>
-        <el-button type="info" @click="logout">退出</el-button>
-      </el-header>
-      <!-- 主体 -->
-      <el-container>
-        <!-- 左边 -->
-        <el-aside :width="fazjh">
+      <el-aside :width="width">
         <div class="toggle-button" @click="toggleCollapse">|||</div>
-          <el-menu background-color="#333744" text-color="#fff"
-          active-text-color="#409eff" :collapse="isCollapse"
-          :collapse-transition="false" unique-opened router
-          :default-active="activePath">
-            <!-- 一级菜单 -->
-            <el-submenu :index="item.id + ''" v-for="item in menulist"
-            :key="item.id">
+        <el-menu
+          background-color="#333744"
+          text-color="#fff"
+          active-text-color="#409EFF"
+          unique-opened
+          :collapse="isCollapse"
+          :collapse-transition="false"
+          router
+          :default-active="activePath"
+        >
+          <el-submenu :index="menu.id+''" v-for="menu in menus" :key="menu.id">
+            <template slot="title">
+              <i :class="icons[menu.id]"></i>
+              <span>{{menu.authName}}</span>
+            </template>
+            <!-- 二级菜单 -->
+            <el-menu-item
+              :index="'/'+subMenu.path"
+              v-for="subMenu in menu.children"
+              :key="subMenu.id"
+              @click="saveNavState('/'+subMenu.path)"
+            >
               <template slot="title">
-                  <!-- 图标 -->
-                <i :class="iconsObj[item.id]"></i>
-                <span slot="title">{{item.authName}}</span>
-              </template>
-              <!-- 二级菜单 -->
-              <!-- <el-menu-item-group> -->
-                <el-menu-item :index="'/' + item.path"
-                v-for="item in item.children" :key="item.id"
-                @click="saveNave('/' + item.path)">
                 <i class="el-icon-menu"></i>
-                <span>{{item.authName}}</span>
-                </el-menu-item>
-              <!-- </el-menu-item-group> -->
-            </el-submenu>
-          </el-menu>
-        </el-aside>
-        <!-- 右边 -->
-        <el-main>
-          <!-- 路由占位符 -->
-          <router-view></router-view>
-        </el-main>
-      </el-container>
+                <span>{{subMenu.authName}}</span>
+              </template>
+            </el-menu-item>
+          </el-submenu>
+        </el-menu>
+      </el-aside>
+      <el-main>
+        <router-view></router-view>
+      </el-main>
     </el-container>
-  </div>
+  </el-container>
 </template>
-
 <script>
 export default {
-  props: {},
-  data () {
-    return {
-      // 左侧菜单
-      menulist: [],
-      iconsObj: {
-        '125': 'iconfont icon-user',
-        '103': 'iconfont icon-tijikongjian',
-        '101': 'iconfont icon-shangpin',
-        '102': 'iconfont icon-danju',
-        '145': 'iconfont icon-baobiao'
-      },
-      // 折叠
-      isCollapse: false,
-      activePath: ''
+  data: () => ({
+    menus: [],
+    icons: {
+      '125': 'iconfont icon-user',
+      '103': 'iconfont icon-tijikongjian',
+      '101': 'iconfont icon-shangpin',
+      '102': 'iconfont icon-danju',
+      '145': 'iconfont icon-baobiao'
+    },
+    isCollapse: false,
+    activePath: sessionStorage.getItem('activePath') || ''
+  }),
+  created() {
+    this.getMenus()
+  },
+  methods: {
+    /**
+     * 退出登录
+     */
+    logout() {
+      sessionStorage.clear()
+      this.$router.push('/login')
+    },
+    /**
+     * 获取左侧菜单数据
+     */
+    async getMenus() {
+      const {
+        data: { data, meta }
+      } = await this.$http.get('menus')
+      if (meta.status !== 200) return this.$message.error(meta.msg)
+      this.menus = data
+    },
+    toggleCollapse() {
+      this.isCollapse = !this.isCollapse
+    },
+    saveNavState(activePath) {
+      this.activePath = activePath
+      // 通过本地存储保存激活的状态
+      sessionStorage.setItem('activePath', activePath)
+    },
+    toHome() {
+      this.$router.push('/home')
     }
   },
   computed: {
-    fazjh: function () {
-      if (this.isCollapse) {
-        return '64px'
-      } else {
-        return '200px'
-      }
+    width() {
+      return this.isCollapse ? '64px' : '200px'
     }
-  },
-  created () {
-    this.getMenus()
-    this.activePath = window.sessionStorage.getItem('activePath')
-  },
-  mounted () {},
-  watch: {
-    fazjh () {
-      console.log('zjh发生了改变')
-    }
-  },
-  methods: {
-    //   退出
-    logout () {
-      window.sessionStorage.clear()
-      this.$router.push('/login')
-    },
-    // 获取所有的菜单
-    async getMenus () {
-      const { data: res } = await this.$http.get('menus')
-      if (res.meta.status !== 200) return this.$message.error(res.meta.msg)
-      this.menulist = res.data
-      console.log(res)
-    },
-    // 折叠按钮
-    toggleCollapse () {
-      this.isCollapse = !this.isCollapse
-    },
-    // 二级菜单状态保存
-    saveNave (active) {
-      window.sessionStorage.setItem('activePath', active)
-      this.activePath = active
-    }
-  },
-  components: {}
+  }
 }
 </script>
-
 <style lang="less" scoped>
 .home {
   height: 100%;
@@ -132,25 +119,19 @@ export default {
       }
     }
   }
-
-  .el-container {
-    height: 100%;
-    .el-aside {
-      background-color: #333744;
-      .el-menu {
-        border-right: none;
-      }
+  .el-aside {
+    background-color: #333744;
+    .el-menu {
+      border-right: none;
+    }
+    .iconfont {
+      margin-right: 10px;
     }
   }
 
   .el-main {
     background-color: #eaedf1;
   }
-
-  .iconfont {
-    margin-right: 10px;
-  }
-
   .toggle-button {
     background-color: #4a5064;
     font-size: 10px;
